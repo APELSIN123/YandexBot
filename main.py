@@ -1,11 +1,17 @@
+
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ConversationHandler, InlineQueryHandler
+from telegram.ext import Updater, MessageHandler, filters
+
 import sqlalchemy.exc
 import logging
-from telegram.ext import CommandHandler, Application, CallbackQueryHandler, ConversationHandler
+
 from Scripts.db import db_session
 from Scripts.db.users import User
 from Scripts.db.money_update import money_update
+
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from mg import get_map_cell
+
 inline_kb = [[InlineKeyboardButton('/play', callback_data='play'),
               InlineKeyboardButton('/info', callback_data='info'),
               InlineKeyboardButton('/help', callback_data='help')]]
@@ -37,6 +43,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+from Scripts.DB import db_session
+from Scripts.Commands import start, test, durak
+from Durak.game import init_game, join, run_game
+
+
 async def start(update, context):
     tguser = update.effective_user
     user_id = update.message.from_user.id
@@ -65,9 +76,6 @@ async def start(update, context):
         return START_ROUTES
 
 
-async def test(update, context):
-    user_id = update.message.from_user.id
-    money_update(user_id, 1000)
 
 
 async def info(update, context):
@@ -196,6 +204,27 @@ def main():
     TOKEN = '6248300309:AAFnPOsUdjAov1y3F99rpOY5BieLxDZT8qY'
     proxy_url = "socks5://user:pass@host:port"
     application = Application.builder().token(TOKEN).build()
+
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(CommandHandler('test', test.test))
+    application.add_handler(CommandHandler('join', join))
+
+    conv_handler = ConversationHandler(entry_points=[CommandHandler('durak', durak.durak_players)],
+
+                                       states=
+
+                                        {
+                                         1: [CallbackQueryHandler(durak.durak_bet)],
+                                         2: [CallbackQueryHandler(durak.durak_deck)],
+                                         3: [CallbackQueryHandler(init_game)],
+                                         4: [CallbackQueryHandler(run_game)]
+                                        },
+
+                                       fallbacks=[CommandHandler('stop', durak.stop)])
+
+    application.add_handler(conv_handler)
+
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -212,13 +241,13 @@ def main():
         },
         fallbacks=[CommandHandler("start", start)]
     )
-    application.add_handler(CommandHandler('test', test))
+
     application.add_handler(CommandHandler('info', info))
     application.add_handler(CommandHandler('play', play))
     application.add_handler(CommandHandler('help', help1))
     application.add_handler(CommandHandler('maze', maze))
-    application.add_handler(CommandHandler('durak', durak))
     application.add_handler(conv_handler)
+
     application.run_polling()
 
 
