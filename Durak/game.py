@@ -40,7 +40,7 @@ async def init_game(update, context):
 
     json.dump(data, file)
 
-    await query.message.reply_text(f'Игра создана успешно! Игроки: {" ".join([str(data[f"player_{i}"][0]) for i in range(int(player_count))])}. \n'
+    await query.message.reply_text(f'Игра создана успешно! Игроки: {" ".join([str(data[f"player_{i}"][1]) for i in range(int(player_count))])}. \n'
                                    f'Ставка: {bet}. \n  Колода на {deck_size}')
 
 
